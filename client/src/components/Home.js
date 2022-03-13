@@ -54,6 +54,13 @@ const Home = ({ user, logout }) => {
     return data;
   };
 
+  const sendTyping = (body) => {
+    socket.emit('set-typing-user',{
+      id: body.id,
+      typing: body.typing,
+    });
+  };
+
   const sendMessage = (data, body) => {
     socket.emit('new-message', {
       message: data.message,
@@ -65,7 +72,11 @@ const Home = ({ user, logout }) => {
   const postMessage =async (body) => {
     try {
       const data =await saveMessage(body);
-
+      const req = {
+        id:user.id,
+        typing:false,
+      }
+      sendTyping(req);
       if (!body.conversationId) {
         addNewConvo(body.recipientId, data.message);
       } else {
@@ -155,6 +166,21 @@ const Home = ({ user, logout }) => {
     );
   }, []);
 
+  const setTypingUser = useCallback((data) => {
+      setConversations((prev) =>
+        prev.map((convo) => {
+          if(convo.otherUser.id === data.id){
+            const convoCopy = {...convo};
+            convoCopy.otherUser = {...convoCopy.otherUser, Typing:data.typing};
+            return convoCopy;
+          } else {
+            return convo;
+          }
+        })
+      );
+    },[]);
+  
+
   // Lifecycle
 
   useEffect(() => {
@@ -162,6 +188,7 @@ const Home = ({ user, logout }) => {
     socket.on('add-online-user', addOnlineUser);
     socket.on('remove-offline-user', removeOfflineUser);
     socket.on('new-message', addMessageToConversation);
+    socket.on('set-typing-user',setTypingUser);
 
     return () => {
       // before the component is destroyed
@@ -169,8 +196,9 @@ const Home = ({ user, logout }) => {
       socket.off('add-online-user', addOnlineUser);
       socket.off('remove-offline-user', removeOfflineUser);
       socket.off('new-message', addMessageToConversation);
+      socket.off('set-typing-user',setTypingUser);
     };
-  }, [addMessageToConversation, addOnlineUser, removeOfflineUser, socket]);
+  }, [addMessageToConversation, addOnlineUser, removeOfflineUser,setTypingUser, socket]);
 
   useEffect(() => {
     // when fetching, prevent redirect
@@ -225,6 +253,7 @@ const Home = ({ user, logout }) => {
           conversations={conversations}
           user={user}
           postMessage={postMessage}
+          sendTyping = {sendTyping}
         />
       </Grid>
     </>

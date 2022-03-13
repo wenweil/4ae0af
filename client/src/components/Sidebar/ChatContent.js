@@ -18,6 +18,17 @@ const useStyles = makeStyles((theme) => ({
     color: "#9CADC8",
     letterSpacing: -0.17,
   },
+  typingText:{
+    fontSize: 12,
+    letterSpacing: -0.17,
+    fontStyle: "italic",
+    animation:"$effect 1s infinite"
+  },
+  "@keyframes effect":{
+    "0%":{color: "#A8A8A8",},
+    "50%":{color: "#5e5e5e",},
+    "100%":{color: "#A8A8A8",}
+  }
 }));
 
 const ChatContent = ({ conversation }) => {
@@ -26,15 +37,28 @@ const ChatContent = ({ conversation }) => {
   const { otherUser } = conversation;
   const latestMessageText = conversation.id && conversation.latestMessageText;
 
+  const isTyping  = (typing) => {
+    if(typing === true){
+      return (
+        <Typography className={classes.typingText}>
+          Typing...
+        </Typography>
+        
+    )} else {
+      return(
+        <Typography className={classes.previewText}>
+          {latestMessageText}
+        </Typography>
+    )};
+  };
+
   return (
     <Box className={classes.root}>
       <Box>
         <Typography className={classes.username}>
           {otherUser.username}
         </Typography>
-        <Typography className={classes.previewText}>
-          {latestMessageText}
-        </Typography>
+        {isTyping(otherUser.Typing)}
       </Box>
     </Box>
   );
