@@ -26,13 +26,11 @@ describe("Bug Fix: Sending Messages", () => {
     cy.contains("Bob").click();
 
     cy.get("input[name=text]").type("First message{enter}");
-    cy.contains("First message");
     cy.get("input[name=text]").type("Second message{enter}");
-    cy.contains("Second message");
     cy.get("input[name=text]").type("Third message{enter}");
 
-    
-    
+    cy.contains("First message");
+    cy.contains("Second message");
     cy.contains("Third message");
   });
 
