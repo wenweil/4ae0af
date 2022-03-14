@@ -8,6 +8,7 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "space-between",
     marginLeft: 20,
     flexGrow: 1,
+    position:'relative'
   },
   username: {
     fontWeight: "bold",
@@ -28,7 +29,20 @@ const useStyles = makeStyles((theme) => ({
     "0%":{color: "#A8A8A8",},
     "50%":{color: "#5e5e5e",},
     "100%":{color: "#A8A8A8",}
+  },
+
+  unread:{
+    position:'absolute',
+    backgroundColor:'#77a3e6',
+    right: '10px',
+    top: '10px',
+    borderRadius:'10px',
+    color:'white',
+    display:'inline-block',
+    minWidth:'20px',
+    textAlign:'center',
   }
+
 }));
 
 const ChatContent = ({ conversation }) => {
@@ -59,6 +73,9 @@ const ChatContent = ({ conversation }) => {
           {otherUser.username}
         </Typography>
         {isTyping(otherUser.Typing)}
+        <Typography className={classes.unread}>
+          1
+        </Typography>
       </Box>
     </Box>
   );
