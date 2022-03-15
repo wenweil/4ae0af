@@ -1,13 +1,13 @@
 /// <reference types="cypress" />
 
 const alice = {
-  username: "Alice",
-  email: "alice@example.com",
+  username: "eve",
+  email: "eve@example.com",
   password: "Z6#6%xfLTarZ9U",
 };
 const bob = {
-  username: "Bob",
-  email: "bob@example.com",
+  username: "faye",
+  email: "faye@example.com",
   password: "L%e$xZHC4QKP@F",
 };
 
