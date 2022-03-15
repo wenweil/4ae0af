@@ -23,21 +23,24 @@ describe("New feature: unread messages", () => {
   it("send new messages", () => {
     cy.login(alice.username, alice.password);
 
-    cy.get("input[name=search]").type("Bob");
-    cy.contains("Bob").click();
+    cy.get("input[name=search]").type("faye");
+    cy.contains("faye").click();
 
     cy.get("input[name=text]").type("First message{enter}");
+    cy.contains("First message");
     cy.get("input[name=text]").type("Second message{enter}");
+    cy.contains("Second message");
     cy.get("input[name=text]").type("Third message{enter}");
     cy.logout();
 
     cy.login(bob.username, bob.password);
-    cy.contains("3");
+    cy.get("p[name=unreadCount]").should("contain","3");
+    cy.logout();
   });
 
   it("clicks on unread conversation", () => {
     cy.login(bob.username, bob.password);
-    cy.contains("3").click();
+    cy.get("p[name=unreadCount]").click();
     cy.logout();
     //verify unread is cleared
     cy.get("p[name=unreadCount]").should("not.exist");

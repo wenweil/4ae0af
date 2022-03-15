@@ -67,22 +67,24 @@ io.on("connection", (socket) => {
     const id = data.id;
     const user = data.user;
     const date = data.date;
-    Conversation.findOne({where:{id:id}})
-      .then((conv) => {
-        if(conv){
-          if(user === 1){
-            conv.update({
-              lastReadU1:date,
-            });
-            conv.save();
-          }else{
-            conv.update({
-              lastReadU2:date,
-            });
-            conv.save();
+    if(id){
+      Conversation.findOne({where:{id:id}})
+        .then((conv) => {
+          if(conv){
+            if(user === 1){
+              conv.update({
+                lastReadU1:date,
+              });
+              conv.save();
+            }else{
+              conv.update({
+                lastReadU2:date,
+              });
+              conv.save();
+            }
           }
-        }
-      });
+        });
+    }
   });
 });
 

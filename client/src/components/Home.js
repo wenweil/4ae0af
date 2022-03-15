@@ -137,7 +137,7 @@ const Home = ({ user, logout }) => {
               const convoCopy = { ...convo};
               convoCopy.messages = [...convoCopy.messages,message];
               convoCopy.latestMessageText = message.text;
-              if(convoCopy.otherUser.username ===  activeConversation){
+              if(convoCopy.otherUser.username ===  activeConversation & user){
                 const user = convoCopy.hasOwnProperty('user1') ? 1 : 2;
                 const req = {
                   id:convoCopy.id,
@@ -154,7 +154,7 @@ const Home = ({ user, logout }) => {
         );
       }
     },
-    [setConversations,updateRead,activeConversation]
+    [setConversations,updateRead,activeConversation,user]
   );
 
   const setActiveChat = (convo) => {
