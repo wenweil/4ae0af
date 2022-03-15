@@ -54,6 +54,15 @@ const Home = ({ user, logout }) => {
     return data;
   };
 
+  const updateRead = useCallback((body) => {
+    console.log(body)
+    socket.emit('update-read',{
+      id:body.id,
+      user:body.user,
+      date:new Date(),
+    })
+  },[socket])
+
   const sendTyping = (body) => {
     socket.emit('set-typing-user',{
       id: body.id,
@@ -118,28 +127,45 @@ const Home = ({ user, logout }) => {
           otherUser: sender,
           messages: [message],
         };
+        newConvo.otherUser.unreadCount = 1;
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
+      }else{
+        setConversations((prev) =>
+          prev.map((convo) =>{
+            if (convo.id === message.conversationId) {
+              const convoCopy = { ...convo};
+              convoCopy.messages.push(message);
+              convoCopy.latestMessageText = message.text;
+              if(convoCopy.otherUser.username ===  activeConversation){
+                const user = convoCopy.hasOwnProperty('user1') ? 1 : 2;
+                const req = {
+                  id:convoCopy.id,
+                  user:user,
+                }
+                updateRead(req);
+              }
+              convoCopy.otherUser.unreadCount = convoCopy.otherUser.username ===  activeConversation ? 0 : convoCopy.otherUser.unreadCount + 1;
+              return convoCopy;
+            }else{
+              return convo
+            }
+          })
+        );
       }
-
-      setConversations((prev) =>
-        prev.map((convo) =>{
-          if (convo.id === message.conversationId) {
-            const convoCopy = { ...convo};
-            convoCopy.messages.push(message);
-            convoCopy.latestMessageText = message.text;
-            return convoCopy;
-          }else{
-            return convo
-          }
-        })
-      );
     },
-    [setConversations]
+    [setConversations,updateRead,activeConversation]
   );
 
-  const setActiveChat = (username) => {
-    setActiveConversation(username);
+  const setActiveChat = (convo) => {
+    convo.otherUser.unreadCount = 0 ;
+    const user = convo.hasOwnProperty('user1') ? 1 : 2;
+    const req = {
+      id:convo.id,
+      user:user,
+    }
+    updateRead(req);
+    setActiveConversation(convo.otherUser.username);
   };
 
   const addOnlineUser = useCallback((id) => {
@@ -183,7 +209,7 @@ const Home = ({ user, logout }) => {
         })
       );
     },[]);
-  
+
 
   // Lifecycle
 
@@ -221,9 +247,17 @@ const Home = ({ user, logout }) => {
     const fetchConversations = async () => {
       try {
         const { data } = await axios.get('/api/conversations');
-        data.map((convo) =>(
-          convo.messages.reverse()
-        ))
+        data.map((convo) =>{
+          convo.messages.reverse();
+          const date = convo.hasOwnProperty('user1') ? convo.lastReadU1 : convo.lastReadU2;
+          let cnt = 0;
+          convo.messages.forEach((message) =>{
+            if(!(date !== null & message.createdAt <= date) & user.id !== message.senderId)
+              cnt = cnt + 1;
+          })
+          convo.otherUser.unreadCount = cnt;
+          return convo;
+        })
         setConversations(data);
       } catch (error) {
         console.error(error);

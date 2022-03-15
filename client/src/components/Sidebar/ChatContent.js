@@ -51,7 +51,7 @@ const ChatContent = ({ conversation }) => {
   const { otherUser } = conversation;
   const latestMessageText = conversation.id && conversation.latestMessageText;
 
-  const isTyping  = (typing) => {
+  const isTyping  = (typing) => { // <= turn into function component?
     if(typing === true){
       return (
         <Typography className={classes.typingText}>
@@ -66,6 +66,18 @@ const ChatContent = ({ conversation }) => {
     )};
   };
 
+  const countUnread = (cnt) =>{ // <= same as above
+    if(cnt && cnt >= 1){
+      return (
+        <Typography name='unreadCount' className={classes.unread}>
+          {cnt}
+        </Typography>
+      );
+    }else{
+      return null;
+    }
+  }
+
   return (
     <Box className={classes.root}>
       <Box>
@@ -73,9 +85,7 @@ const ChatContent = ({ conversation }) => {
           {otherUser.username}
         </Typography>
         {isTyping(otherUser.Typing)}
-        <Typography className={classes.unread}>
-          1
-        </Typography>
+        {countUnread(otherUser.unreadCount)}
       </Box>
     </Box>
   );

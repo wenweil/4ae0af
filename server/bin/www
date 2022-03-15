@@ -11,6 +11,7 @@ const { app, sessionStore } = require("../app");
 const http = require("http");
 const db = require("../db");
 const onlineUsers = require("../onlineUsers");
+const { Conversation } = require("../db/models");
 
 /**
  * Get port from environment and store in Express.
@@ -60,6 +61,28 @@ io.on("connection", (socket) => {
       onlineUsers.splice(userIndex, 1);
       socket.broadcast.emit("remove-offline-user", id);
     }
+  });
+
+  socket.on("update-read", (data) => {
+    const id = data.id;
+    const user = data.user;
+    const date = data.date;
+    Conversation.findOne({where:{id:id}})
+      .then((conv) => {
+        if(conv){
+          if(user === 1){
+            conv.update({
+              lastReadU1:date,
+            });
+            conv.save();
+          }else{
+            conv.update({
+              lastReadU2:date,
+            });
+            conv.save();
+          }
+        }
+      });
   });
 });
 
