@@ -55,7 +55,6 @@ const Home = ({ user, logout }) => {
   };
 
   const updateRead = useCallback((body) => {
-    console.log(body)
     socket.emit('update-read',{
       id:body.id,
       user:body.user,
