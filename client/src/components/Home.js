@@ -56,7 +56,6 @@ const Home = ({ user, logout }) => {
 
 
   const updateRead = useCallback( async (req) => {
-    console.log(req)
     socket.emit('send-last-read',{
       id: req.id,
       message: req.message,
@@ -198,13 +197,11 @@ const Home = ({ user, logout }) => {
   }, []);
 
   const setLastRead = useCallback((data) => {
-    console.log(data)
     setConversations((prev) =>
       prev.map((convo) => {
         if(convo !== null & convo.id === data.id){
           const convoCopy = {...convo};
           convoCopy.otherUser = {...convoCopy.otherUser, lastRead:data.message};
-          console.log(convoCopy);
           return convoCopy;
         } else {
           return convo;

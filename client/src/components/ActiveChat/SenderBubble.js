@@ -33,14 +33,13 @@ const useStyles = makeStyles(() => ({
 
 const SenderBubble = ({ time, text, otherUser, mid }) => {
   const classes = useStyles();
-
   return (
     <Box className={classes.root}>
       <Typography className={classes.date}>{time}</Typography>
       <Box className={classes.bubble}>
         <Typography className={classes.text}>{text}</Typography>
       </Box>
-      {(otherUser.lastRead !== null && mid === otherUser.lastRead.id) && <Avatar alt={otherUser.username} src={otherUser.photoUrl} className={classes.profilePic}/> }
+      {(otherUser.lastRead && mid === otherUser.lastRead.id) && <Avatar alt={otherUser.username} src={otherUser.photoUrl} className={classes.profilePic}/> }
     </Box>
   );
 };
