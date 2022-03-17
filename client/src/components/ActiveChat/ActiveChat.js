@@ -1,7 +1,7 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Box } from '@material-ui/core';
-import { Input, Header, Messages, TypingBubble } from './index';
+import { Input, Header, Messages } from './index';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -24,7 +24,6 @@ const ActiveChat = ({
   conversations,
   activeConversation,
   postMessage,
-  sendTyping,
 }) => {
   const classes = useStyles();
 
@@ -59,7 +58,6 @@ const ActiveChat = ({
                   conversationId={conversation.id || null}
                   user={user}
                   postMessage={postMessage}
-                  sendTyping={sendTyping}
                 />
               </>
             )}

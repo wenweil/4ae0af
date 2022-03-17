@@ -24,18 +24,6 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
     letterSpacing: -0.17,
   },
-  typingText:{
-    fontSize: 12,
-    letterSpacing: -0.17,
-    fontStyle: "italic",
-    animation:"$effect 1s infinite"
-  },
-  "@keyframes effect":{
-    "0%":{color: "#A8A8A8",},
-    "50%":{color: "#5e5e5e",},
-    "100%":{color: "#A8A8A8",}
-  },
-
   unread:{
     position:'absolute',
     right: '10%',
@@ -50,33 +38,21 @@ const ChatContent = ({ conversation }) => {
   const { otherUser } = conversation;
   const latestMessageText = conversation.id && conversation.latestMessageText;
 
-  const isTyping  = (typing,cnt) => { // <= turn into function component?
-    if(typing === true){
+  const previewText  = (cnt) => { // <= turn into function component?
+    if(cnt && cnt >= 1){
       return (
-        <Typography className={classes.typingText}>
-          Typing...
-        </Typography>
-        
-    )} else {
-      if(cnt && cnt >= 1){
-        return (
-          <Typography className={classes.previewTextUnread}>
-              {latestMessageText}
-          </Typography>
-        )
-      }else{
-        return(
-          <Typography className={classes.previewText}>
+        <Typography className={classes.previewTextUnread}>
             {latestMessageText}
-          </Typography>
-        )
-      }
-    };
+        </Typography>
+      )
+    }else{
+      return(
+        <Typography className={classes.previewText}>
+          {latestMessageText}
+        </Typography>
+      )
+    }
   };
-
-  const countUnread = (cnt) =>{ // <= same as above
-    return (<Badge name='unreadCount' badgeContent = {cnt} color = "primary" className={classes.unread}/>)
-  }
 
   return (
     <Box className={classes.root}>
@@ -84,8 +60,8 @@ const ChatContent = ({ conversation }) => {
         <Typography className={classes.username}>
           {otherUser.username}
         </Typography>
-        {isTyping(otherUser.Typing, otherUser.unreadCount)}
-        {countUnread(otherUser.unreadCount)}
+        {previewText( otherUser.unreadCount)}
+        <Badge name='unreadCount' badgeContent = {otherUser.unreadCount} color = "primary" className={classes.unread}/>
       </Box>
     </Box>
   );

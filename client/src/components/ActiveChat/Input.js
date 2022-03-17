@@ -15,10 +15,9 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Input = ({ otherUser, conversationId, user, postMessage, sendTyping }) => {
+const Input = ({ otherUser, conversationId, user, postMessage }) => {
   const classes = useStyles();
   const [text, setText] = useState('');
-  const [typing,setTyping] = useState(false);
 
   const handleChange = (event) => {
     setText(event.target.value);
