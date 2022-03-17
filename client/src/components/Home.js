@@ -136,13 +136,16 @@ const Home = ({ user, logout }) => {
               if(message.senderId !== user.id)
                 convoCopy.lastReceived = message;
               if(convoCopy.otherUser.username ===  activeConversation && user){
-                const user = convoCopy.hasOwnProperty('user1') ? 1 : 2;
-                const req = {
-                  id:convoCopy.id,
-                  user:user,
-                  message:convoCopy.lastReceived,
+                const hasRecord = convoCopy.hasOwnProperty('user1') || convoCopy.hasOwnProperty('user2');
+                if(hasRecord){
+                  const user = convoCopy.hasOwnProperty('user1') ? 1 : 2;
+                  const req = {
+                    id:convoCopy.id,
+                    user:user,
+                    message:convoCopy.lastReceived,
+                  }
+                  updateRead(req);
                 }
-                updateRead(req);
               }
               convoCopy.otherUser.unreadCount = convoCopy.otherUser.username ===  activeConversation ? 0 : convoCopy.otherUser.unreadCount + 1;
               return convoCopy;
@@ -157,14 +160,16 @@ const Home = ({ user, logout }) => {
   );
 
   const setActiveChat = (convo) => {
-    const user = convo.hasOwnProperty('user1') ? 1 : 2;
-    const req = {
-      id:convo.id,
-      user:user,
-      message:convo.lastReceived,
-    };
-    updateRead(req);
-    convo.otherUser.unreadCount = 0;
+    if(convo.id){
+      const user = convo.hasOwnProperty('user1') ? 1 : 2;
+      const req = {
+        id:convo.id,
+        user:user,
+        message:convo.lastReceived,
+      };
+      updateRead(req);
+      convo.otherUser.unreadCount = 0;
+    }
     setActiveConversation(convo.otherUser.username);
   };
 
