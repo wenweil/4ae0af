@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@material-ui/core";
+import { Box, Typography, Badge } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -19,6 +19,11 @@ const useStyles = makeStyles((theme) => ({
     color: "#9CADC8",
     letterSpacing: -0.17,
   },
+  previewTextUnread: {
+    fontSize: 13,
+    fontWeight: "bold",
+    letterSpacing: -0.17,
+  },
   typingText:{
     fontSize: 12,
     letterSpacing: -0.17,
@@ -33,14 +38,8 @@ const useStyles = makeStyles((theme) => ({
 
   unread:{
     position:'absolute',
-    backgroundColor:'#77a3e6',
-    right: '10px',
-    top: '10px',
-    borderRadius:'10px',
-    color:'white',
-    display:'inline-block',
-    minWidth:'20px',
-    textAlign:'center',
+    right: '10%',
+    top: '50%',
   }
 
 }));
@@ -51,7 +50,7 @@ const ChatContent = ({ conversation }) => {
   const { otherUser } = conversation;
   const latestMessageText = conversation.id && conversation.latestMessageText;
 
-  const isTyping  = (typing) => { // <= turn into function component?
+  const isTyping  = (typing,cnt) => { // <= turn into function component?
     if(typing === true){
       return (
         <Typography className={classes.typingText}>
@@ -59,23 +58,24 @@ const ChatContent = ({ conversation }) => {
         </Typography>
         
     )} else {
-      return(
-        <Typography className={classes.previewText}>
-          {latestMessageText}
-        </Typography>
-    )};
+      if(cnt && cnt >= 1){
+        return (
+          <Typography className={classes.previewTextUnread}>
+              {latestMessageText}
+          </Typography>
+        )
+      }else{
+        return(
+          <Typography className={classes.previewText}>
+            {latestMessageText}
+          </Typography>
+        )
+      }
+    };
   };
 
   const countUnread = (cnt) =>{ // <= same as above
-    if(cnt && cnt >= 1){
-      return (
-        <Typography name='unreadCount' className={classes.unread}>
-          {cnt}
-        </Typography>
-      );
-    }else{
-      return null;
-    }
+    return (<Badge name='unreadCount' badgeContent = {cnt} color = "primary" className={classes.unread}/>)
   }
 
   return (
@@ -84,7 +84,7 @@ const ChatContent = ({ conversation }) => {
         <Typography className={classes.username}>
           {otherUser.username}
         </Typography>
-        {isTyping(otherUser.Typing)}
+        {isTyping(otherUser.Typing, otherUser.unreadCount)}
         {countUnread(otherUser.unreadCount)}
       </Box>
     </Box>

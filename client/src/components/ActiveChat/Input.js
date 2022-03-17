@@ -21,14 +21,6 @@ const Input = ({ otherUser, conversationId, user, postMessage, sendTyping }) => 
   const [typing,setTyping] = useState(false);
 
   const handleChange = (event) => {
-    if(typing === false){
-      setTyping(true);
-      const req = {
-        id: user.id,
-        typing:true,
-      }
-      sendTyping(req);
-    }
     setText(event.target.value);
   };
 
@@ -43,7 +35,6 @@ const Input = ({ otherUser, conversationId, user, postMessage, sendTyping }) => 
       conversationId,
       sender: conversationId ? null : user,
     };
-    setTyping(false);
     await postMessage(reqBody);
     setText('');
   };

@@ -54,7 +54,6 @@ const ActiveChat = ({
                   otherUser={conversation.otherUser}
                   userId={user.id}
                 />
-                {conversation.otherUser.Typing && <TypingBubble otherUser={conversation.otherUser}/>}
                 <Input
                   otherUser={conversation.otherUser}
                   conversationId={conversation.id || null}

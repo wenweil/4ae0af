@@ -54,20 +54,21 @@ const Home = ({ user, logout }) => {
     return data;
   };
 
-  const updateRead = useCallback((body) => {
-    socket.emit('update-read',{
-      id:body.id,
-      user:body.user,
-      date:new Date(),
-    })
-  },[socket])
 
-  const sendTyping = (body) => {
-    socket.emit('set-typing-user',{
-      id: body.id,
-      typing: body.typing,
+  const updateRead = useCallback( async (req) => {
+    console.log(req)
+    socket.emit('send-last-read',{
+      id: req.id,
+      message: req.message,
     });
-  };
+    const body = {
+      id:req.id,
+      user:req.user,
+      date:new Date(),
+    }
+    const { data } = await axios.post('/api/conversations', body);
+    return data;
+  },[socket])
 
   const sendMessage = (data, body) => {
     socket.emit('new-message', {
@@ -80,11 +81,6 @@ const Home = ({ user, logout }) => {
   const postMessage =async (body) => {
     try {
       const data =await saveMessage(body);
-      const req = {
-        id:user.id,
-        typing:false,
-      }
-      sendTyping(req);
       if (!body.conversationId) {
         addNewConvo(body.recipientId, data.message);
       } else {
@@ -126,6 +122,8 @@ const Home = ({ user, logout }) => {
           otherUser: sender,
           messages: [message],
         };
+        if(message.senderId !== user.id)
+          newConvo.lastReceived = message;
         newConvo.otherUser.unreadCount = 1;
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
@@ -135,12 +133,15 @@ const Home = ({ user, logout }) => {
             if (convo.id === message.conversationId) {
               const convoCopy = { ...convo};
               convoCopy.messages = [...convoCopy.messages,message];
-              convoCopy.latestMessageText = message.text;
-              if(convoCopy.otherUser.username ===  activeConversation & user){
+              convoCopy.latestMessageText = message.text;              
+              if(message.senderId !== user.id)
+                convoCopy.lastReceived = message;
+              if(convoCopy.otherUser.username ===  activeConversation && user){
                 const user = convoCopy.hasOwnProperty('user1') ? 1 : 2;
                 const req = {
                   id:convoCopy.id,
                   user:user,
+                  message:convoCopy.lastReceived,
                 }
                 updateRead(req);
               }
@@ -153,17 +154,18 @@ const Home = ({ user, logout }) => {
         );
       }
     },
-    [setConversations,updateRead,activeConversation,user]
+    [setConversations, updateRead, user, activeConversation]
   );
 
   const setActiveChat = (convo) => {
-    convo.otherUser.unreadCount = 0 ;
     const user = convo.hasOwnProperty('user1') ? 1 : 2;
     const req = {
       id:convo.id,
       user:user,
-    }
+      message:convo.lastReceived,
+    };
     updateRead(req);
+    convo.otherUser.unreadCount = 0;
     setActiveConversation(convo.otherUser.username);
   };
 
@@ -195,19 +197,21 @@ const Home = ({ user, logout }) => {
     );
   }, []);
 
-  const setTypingUser = useCallback((data) => {
-      setConversations((prev) =>
-        prev.map((convo) => {
-          if(convo.otherUser.id === data.id){
-            const convoCopy = {...convo};
-            convoCopy.otherUser = {...convoCopy.otherUser, Typing:data.typing};
-            return convoCopy;
-          } else {
-            return convo;
-          }
-        })
-      );
-    },[]);
+  const setLastRead = useCallback((data) => {
+    console.log(data)
+    setConversations((prev) =>
+      prev.map((convo) => {
+        if(convo !== null & convo.id === data.id){
+          const convoCopy = {...convo};
+          convoCopy.otherUser = {...convoCopy.otherUser, lastRead:data.message};
+          console.log(convoCopy);
+          return convoCopy;
+        } else {
+          return convo;
+        }
+      })
+    );
+  },[]);
 
 
   // Lifecycle
@@ -217,7 +221,7 @@ const Home = ({ user, logout }) => {
     socket.on('add-online-user', addOnlineUser);
     socket.on('remove-offline-user', removeOfflineUser);
     socket.on('new-message', addMessageToConversation);
-    socket.on('set-typing-user',setTypingUser);
+    socket.on('send-last-read',setLastRead);
 
     return () => {
       // before the component is destroyed
@@ -225,9 +229,9 @@ const Home = ({ user, logout }) => {
       socket.off('add-online-user', addOnlineUser);
       socket.off('remove-offline-user', removeOfflineUser);
       socket.off('new-message', addMessageToConversation);
-      socket.off('set-typing-user',setTypingUser);
+      socket.off('send-last-read',setLastRead);
     };
-  }, [addMessageToConversation, addOnlineUser, removeOfflineUser,setTypingUser, socket]);
+  }, [addMessageToConversation, addOnlineUser, removeOfflineUser, setLastRead, socket]);
 
   useEffect(() => {
     // when fetching, prevent redirect
@@ -249,11 +253,23 @@ const Home = ({ user, logout }) => {
         data.map((convo) =>{
           convo.messages.reverse();
           const date = convo.hasOwnProperty('user1') ? convo.lastReadU1 : convo.lastReadU2;
+          const date2 = convo.hasOwnProperty('user1') ? convo.lastReadU2 : convo.lastReadU1;
           let cnt = 0;
-          convo.messages.forEach((message) =>{
-            if(!(date !== null & message.createdAt <= date) & user.id !== message.senderId)
-              cnt = cnt + 1;
-          })
+          let last = -1;
+          let read = -1;
+          convo.messages.map((message, index) =>{
+            if(user.id !== message.senderId){
+              if(!(date !== null & message.createdAt <= date))
+                cnt = cnt + 1;
+              last = last > index ? last : index;
+            }else{
+              if(date2 !== null & message.createdAt <= date2)
+                read = read > index ? read : index;
+            }
+            return message;
+          });
+          convo.lastReceived = last !== -1 && convo.messages[last];
+          convo.otherUser.lastRead = read !== -1 && convo.messages[read];
           convo.otherUser.unreadCount = cnt;
           return convo;
         })
@@ -290,7 +306,6 @@ const Home = ({ user, logout }) => {
           conversations={conversations}
           user={user}
           postMessage={postMessage}
-          sendTyping = {sendTyping}
         />
       </Grid>
     </>

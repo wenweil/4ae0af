@@ -78,4 +78,37 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.post('/', async (req, res, next) => {
+  try{
+    if(!req.user)
+      return res.sendStatus(401);
+    const id = req.body.id;
+    const user = req.body.user;
+    const date = req.body.date;
+    if(id){
+      const ret = await Conversation.findOne({where:{id:id}})
+        .then((conv) => {
+          if(conv){
+            if(user === 1){
+              conv.update({
+                lastReadU1:date,
+              });
+              conv.save();
+            }else{
+              conv.update({
+                lastReadU2:date,
+              });
+              conv.save();
+            }
+          }
+        });
+      return res.json(ret);
+    }else{
+      return res.sendStatus(401);
+    }
+  }catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
