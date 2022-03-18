@@ -64,10 +64,11 @@ const Home = ({ user, logout }) => {
       id:req.id,
       user:req.user,
       date:new Date(),
+      userId:user.id,
     }
-    const { data } = await axios.post('/api/conversations', body);
+    const { data } = await axios.put('/api/conversations', body);
     return data;
-  },[socket])
+  },[socket, user])
 
   const sendMessage = (data, body) => {
     socket.emit('new-message', {
@@ -256,13 +257,13 @@ const Home = ({ user, logout }) => {
           convo.messages.reverse();
           const date = convo.hasOwnProperty('user1') ? convo.lastReadU1 : convo.lastReadU2;
           const date2 = convo.hasOwnProperty('user1') ? convo.lastReadU2 : convo.lastReadU1;
-          let cnt = 0;
+          let unreadCount = 0;
           let last = -1;
           let read = -1;
           convo.messages.map((message, index) =>{
             if(user.id !== message.senderId){
               if(!(date !== null & message.createdAt <= date))
-                cnt = cnt + 1;
+                unreadCount = unreadCount + 1;
               last = last > index ? last : index;
             }else{
               if(date2 !== null & message.createdAt <= date2)
@@ -272,7 +273,7 @@ const Home = ({ user, logout }) => {
           });
           convo.lastReceived = last !== -1 && convo.messages[last];
           convo.otherUser.lastRead = read !== -1 && convo.messages[read];
-          convo.otherUser.unreadCount = cnt;
+          convo.otherUser.unreadCount = unreadCount;
           return convo;
         })
         setConversations(data);

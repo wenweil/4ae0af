@@ -78,17 +78,21 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.put('/', async (req, res, next) => {
   try{
-    if(!req.user)
+    if(!req)
       return res.sendStatus(401);
     const id = req.body.id;
     const user = req.body.user;
     const date = req.body.date;
+    const userId = req.body.userId;
     if(id){
-      const ret = await Conversation.findOne({where:{id:id}})
+      const convo = await Conversation.findOne({where:{id:id}})
         .then((conv) => {
           if(conv){
+            const convJSON = conv.toJSON();
+            if(userId !== convJSON.user1Id && userId !== convJSON.user2Id)
+              return res.sendStatus(401);
             if(user === 1){
               conv.update({
                 lastReadU1:date,
@@ -102,9 +106,9 @@ router.post('/', async (req, res, next) => {
             }
           }
         });
-      return res.json(ret);
+      return res.json(convo);
     }else{
-      return res.sendStatus(401);
+      return res.sendStatus(400);
     }
   }catch (err) {
     next(err);
