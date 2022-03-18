@@ -71,8 +71,10 @@ async function seed() {
   const hualingConvo = await Conversation.create({
     user2Id: hualing.id,
     user1Id: thomas.id,
+    lastReadU1:new Date(),
+    lastReadU2:new Date(),
   });
-
+  console.log(hualingConvo.toJSON());
   for (let i = 0; i < 11; i++) {
     await Message.create({
       conversationId: hualingConvo.id,

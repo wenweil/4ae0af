@@ -18,7 +18,7 @@ router.get("/", async (req, res, next) => {
           user2Id: userId,
         },
       },
-      attributes: ["id"],
+      attributes: ["id", "lastReadU1" , "lastReadU2"],
       order: [[Message, "createdAt", "DESC"]],
       include: [
         { model: Message, order: ["createdAt", "DESC"] },
@@ -75,6 +75,43 @@ router.get("/", async (req, res, next) => {
     res.json(conversations);
   } catch (error) {
     next(error);
+  }
+});
+
+router.put('/', async (req, res, next) => {
+  try{
+    if(!req)
+      return res.sendStatus(401);
+    const id = req.body.id;
+    const user = req.body.user;
+    const date = req.body.date;
+    const userId = req.body.userId;
+    if(id){
+      const convo = await Conversation.findOne({where:{id:id}})
+        .then((conv) => {
+          if(conv){
+            const convJSON = conv.toJSON();
+            if(userId !== convJSON.user1Id && userId !== convJSON.user2Id)
+              return res.sendStatus(401);
+            if(user === 1){
+              conv.update({
+                lastReadU1:date,
+              });
+              conv.save();
+            }else{
+              conv.update({
+                lastReadU2:date,
+              });
+              conv.save();
+            }
+          }
+        });
+      return res.json(convo);
+    }else{
+      return res.sendStatus(400);
+    }
+  }catch (err) {
+    next(err);
   }
 });
 

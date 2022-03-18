@@ -11,6 +11,7 @@ const { app, sessionStore } = require("../app");
 const http = require("http");
 const db = require("../db");
 const onlineUsers = require("../onlineUsers");
+const { Conversation } = require("../db/models");
 
 /**
  * Get port from environment and store in Express.
@@ -38,6 +39,13 @@ io.on("connection", (socket) => {
     }
     // send the user who just went online to everyone else who is already online
     socket.broadcast.emit("add-online-user", id);
+  });
+
+  socket.on("send-last-read", (data) =>{
+    socket.broadcast.emit("send-last-read", {
+      id:data.id,
+      message:data.message,
+    });
   });
 
   socket.on("new-message", (data) => {

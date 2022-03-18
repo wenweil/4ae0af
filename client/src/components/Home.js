@@ -54,6 +54,22 @@ const Home = ({ user, logout }) => {
     return data;
   };
 
+
+  const updateRead = useCallback( async (req) => {
+    socket.emit('send-last-read',{
+      id: req.id,
+      message: req.message,
+    });
+    const body = {
+      id:req.id,
+      user:req.user,
+      date:new Date(),
+      userId:user.id,
+    }
+    const { data } = await axios.put('/api/conversations', body);
+    return data;
+  },[socket, user])
+
   const sendMessage = (data, body) => {
     socket.emit('new-message', {
       message: data.message,
@@ -65,7 +81,6 @@ const Home = ({ user, logout }) => {
   const postMessage =async (body) => {
     try {
       const data =await saveMessage(body);
-
       if (!body.conversationId) {
         addNewConvo(body.recipientId, data.message);
       } else {
@@ -107,28 +122,56 @@ const Home = ({ user, logout }) => {
           otherUser: sender,
           messages: [message],
         };
+        if(message.senderId !== user.id)
+          newConvo.lastReceived = message;
+        newConvo.otherUser.unreadCount = 1;
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
+      }else{
+        setConversations((prev) =>
+          prev.map((convo) =>{
+            if (convo.id === message.conversationId) {
+              const convoCopy = { ...convo};
+              convoCopy.messages = [...convoCopy.messages,message];
+              convoCopy.latestMessageText = message.text;              
+              if(message.senderId !== user.id)
+                convoCopy.lastReceived = message;
+              if(convoCopy.otherUser.username ===  activeConversation && user){
+                const hasRecord = convoCopy.hasOwnProperty('user1') || convoCopy.hasOwnProperty('user2');
+                if(hasRecord){
+                  const user = convoCopy.hasOwnProperty('user1') ? 1 : 2;
+                  const req = {
+                    id:convoCopy.id,
+                    user:user,
+                    message:convoCopy.lastReceived,
+                  }
+                  updateRead(req);
+                }
+              }
+              convoCopy.otherUser.unreadCount = convoCopy.otherUser.username ===  activeConversation ? 0 : convoCopy.otherUser.unreadCount + 1;
+              return convoCopy;
+            }else{
+              return convo
+            }
+          })
+        );
       }
-
-      setConversations((prev) =>
-        prev.map((convo) =>{
-          if (convo.id === message.conversationId) {
-            const convoCopy = { ...convo};
-            convoCopy.messages = [...convoCopy.messages, message]
-            convoCopy.latestMessageText = message.text;
-            return convoCopy;
-          }else{
-            return convo
-          }
-        })
-      );
     },
-    [setConversations]
+    [setConversations, updateRead, user, activeConversation]
   );
 
-  const setActiveChat = (username) => {
-    setActiveConversation(username);
+  const setActiveChat = (convo) => {
+    if(convo.id){
+      const user = convo.hasOwnProperty('user1') ? 1 : 2;
+      const req = {
+        id:convo.id,
+        user:user,
+        message:convo.lastReceived,
+      };
+      updateRead(req);
+      convo.otherUser.unreadCount = 0;
+    }
+    setActiveConversation(convo.otherUser.username);
   };
 
   const addOnlineUser = useCallback((id) => {
@@ -159,6 +202,21 @@ const Home = ({ user, logout }) => {
     );
   }, []);
 
+  const setLastRead = useCallback((data) => {
+    setConversations((prev) =>
+      prev.map((convo) => {
+        if(convo !== null & convo.id === data.id){
+          const convoCopy = {...convo};
+          convoCopy.otherUser = {...convoCopy.otherUser, lastRead:data.message};
+          return convoCopy;
+        } else {
+          return convo;
+        }
+      })
+    );
+  },[]);
+
+
   // Lifecycle
 
   useEffect(() => {
@@ -166,6 +224,7 @@ const Home = ({ user, logout }) => {
     socket.on('add-online-user', addOnlineUser);
     socket.on('remove-offline-user', removeOfflineUser);
     socket.on('new-message', addMessageToConversation);
+    socket.on('send-last-read',setLastRead);
 
     return () => {
       // before the component is destroyed
@@ -173,8 +232,9 @@ const Home = ({ user, logout }) => {
       socket.off('add-online-user', addOnlineUser);
       socket.off('remove-offline-user', removeOfflineUser);
       socket.off('new-message', addMessageToConversation);
+      socket.off('send-last-read',setLastRead);
     };
-  }, [addMessageToConversation, addOnlineUser, removeOfflineUser, socket]);
+  }, [addMessageToConversation, addOnlineUser, removeOfflineUser, setLastRead, socket]);
 
   useEffect(() => {
     // when fetching, prevent redirect
@@ -193,9 +253,29 @@ const Home = ({ user, logout }) => {
     const fetchConversations = async () => {
       try {
         const { data } = await axios.get('/api/conversations');
-        data.map((convo) =>(
-          convo.messages.reverse()
-        ))
+        data.map((convo) =>{
+          convo.messages.reverse();
+          const date = convo.hasOwnProperty('user1') ? convo.lastReadU1 : convo.lastReadU2;
+          const date2 = convo.hasOwnProperty('user1') ? convo.lastReadU2 : convo.lastReadU1;
+          let unreadCount = 0;
+          let last = -1;
+          let read = -1;
+          convo.messages.map((message, index) =>{
+            if(user.id !== message.senderId){
+              if(!(date !== null & message.createdAt <= date))
+                unreadCount = unreadCount + 1;
+              last = last > index ? last : index;
+            }else{
+              if(date2 !== null & message.createdAt <= date2)
+                read = read > index ? read : index;
+            }
+            return message;
+          });
+          convo.lastReceived = last !== -1 && convo.messages[last];
+          convo.otherUser.lastRead = read !== -1 && convo.messages[read];
+          convo.otherUser.unreadCount = unreadCount;
+          return convo;
+        })
         setConversations(data);
       } catch (error) {
         console.error(error);
